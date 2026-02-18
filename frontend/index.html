@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Smart City Accident Detection</title>
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+:root {
+    --bg: #020617;
+    --card: #0f172a;
+    --accent: #38bdf8;
+    --danger: #ef4444;
+    --success: #22c55e;
+    --text: #e5e7eb;
+}
+
+* {
+    box-sizing: border-box;
+    font-family: "Segoe UI", sans-serif;
+}
+
+body {
+    margin: 0;
+    background: radial-gradient(circle at top, #020617, #000);
+    color: var(--text);
+}
+
+/* HEADER */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 40px;
+    background: rgba(15,23,42,0.8);
+    backdrop-filter: blur(10px);
+}
+
+header h1 {
+    color: var(--accent);
+    font-size: 22px;
+}
+
+/* NAV */
+nav button {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 15px;
+    margin-left: 25px;
+    cursor: pointer;
+    padding-bottom: 6px;
+}
+
+nav button.active {
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+}
+
+/* CONTENT */
+main {
+    padding: 30px;
+}
+
+.section {
+    display: none;
+}
+
+.section.active {
+    display: block;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
+    gap: 25px;
+}
+
+.card {
+    background: linear-gradient(145deg, #020617, #0f172a);
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+}
+
+.card h2 {
+    margin-top: 0;
+    color: var(--accent);
+}
+
+/* STATUS */
+.status-ok { color: var(--success); font-weight: bold; }
+.status-error { color: var(--danger); font-weight: bold; }
+
+.high { color: var(--danger); font-weight: bold; }
+.low { color: var(--success); font-weight: bold; }
+
+/* MAP */
+#mapBox {
+    height: 420px;
+    border-radius: 16px;
+}
+
+/* BUTTON */
+.download-btn {
+    padding: 14px 22px;
+    background: var(--success);
+    color: black;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* IMAGES */
+#images img {
+    width: 100%;
+    margin-top: 12px;
+    border-radius: 12px;
+    border: 2px solid var(--danger);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>🚦 Smart City Accident Detection</h1>
+    <nav>
+        <button class="active" onclick="showTab(event,'dashboard')">Dashboard</button>
+        <button onclick="showTab(event,'alerts')">Alerts</button>
+        <button onclick="showTab(event,'map')">Live Map</button>
+        <button onclick="showTab(event,'reports')">Reports</button>
+        <button onclick="showTab(event,'live')">Live Video</button>
+
+    </nav>
+</header>
+
+<main>
+
+<section id="dashboard" class="section active">
+    <div class="grid">
+        <div class="card">
+            <h2>System Status</h2>
+            <p id="status">Checking...</p>
+        </div>
+
+        <div class="card">
+            <h2>Risk Level</h2>
+            <p id="risk">Analyzing...</p>
+        </div>
+
+        <div class="card">
+            <h2>Accident Alerts</h2>
+            <p id="alerts">Loading...</p>
+        </div>
+
+    </div>
+</section>
+
+<section id="alerts" class="section">
+    <div class="card">
+        <h2>📸 Accident Snapshots</h2>
+        <div id="images"></div>
+    </div>
+</section>
+
+<section id="map" class="section">
+    <div class="card">
+        <h2>🗺 Live Traffic Map</h2>
+        <div id="mapBox"></div>
+    </div>
+</section>
+
+<section id="reports" class="section">
+    <div class="card">
+        <h2>📄 Accident Report</h2>
+        <a href="/download-report">
+            <button class="download-btn">Download PDF Report</button>
+        </a>
+    </div>
+</section>
+<section id="live" class="section">
+    <div class="grid">
+
+        <div class="card">
+            <h2>📷 Trimarc KY446</h2>
+            <img src="/video/1" style="width:100%; border-radius:12px;" />
+        </div>
+
+        <div class="card">
+            <h2>📷 Local Webcam</h2>
+            <img src="/video/2" style="width:100%; border-radius:12px;" />
+        </div>
+
+    </div>
+</section>
+
+
+</main>
+
+<script>
+function showTab(e, tab) {
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+    document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+
+    document.getElementById(tab).classList.add("active");
+    e.target.classList.add("active");
+
+    if (tab === "map") loadMap();
+}
+
+let mapInitialized = false;
+let map;
+
+function loadMap() {
+    if (mapInitialized) return;
+    mapInitialized = true;
+
+    map = L.map("mapBox").setView([17.385044, 78.486671], 13);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap"
+    }).addTo(map);
+}
+
+async function loadData() {
+    try {
+        document.getElementById("status").innerHTML =
+            "<span class='status-ok'>● Backend Online</span>";
+
+        const alertsRes = await fetch("/alerts");
+        const alertsData = await alertsRes.json();
+        document.getElementById("alerts").innerText =
+            alertsData.message || "No active accidents";
+
+        const analysisRes = await fetch("/analyze");
+        const analysis = await analysisRes.json();
+
+        const riskEl = document.getElementById("risk");
+        riskEl.innerText =
+            `${analysis.risk_level} (${analysis.accidents_detected} accidents)`;
+        riskEl.className = analysis.risk_level === "HIGH" ? "high" : "low";
+
+        const imgRes = await fetch("/accident-images");
+        const imgData = await imgRes.json();
+
+        const imgDiv = document.getElementById("images");
+        imgDiv.innerHTML = "";
+        imgData.images.forEach(img => {
+            const i = document.createElement("img");
+            i.src = "/accidents/" + img;
+            imgDiv.appendChild(i);
+        });
+
+    } catch {
+        document.getElementById("status").innerHTML =
+            "<span class='status-error'>● Backend Error</span>";
+    }
+}
+
+loadData();
+setInterval(loadData, 5000);
+</script>
+</body>
+</html>
