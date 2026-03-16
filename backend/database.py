@@ -1,13 +1,38 @@
 from datetime import datetime
+import time
 
 latest_alert = {
     "accident": False,
     "timestamp": None
 }
 
+stats = {
+    "total_frames": 0,
+    "total_accidents": 0
+}
+
+cooldowns = {
+    "last_alert_time": 0,
+    "last_snapshot_time": None
+}
+
 def set_alert(status: bool):
     latest_alert["accident"] = status
     latest_alert["timestamp"] = datetime.now().isoformat()
+    cooldowns["last_alert_time"] = time.time()
+
+def get_stats():
+    return stats
+
+def update_stats(frames_inc=1, accidents_inc=0):
+    stats["total_frames"] += frames_inc
+    stats["total_accidents"] += accidents_inc
+
+def get_cooldown(key):
+    return cooldowns[key]
+
+def update_cooldown(key, value):
+    cooldowns[key] = value
 
 def get_alert():
     return latest_alert

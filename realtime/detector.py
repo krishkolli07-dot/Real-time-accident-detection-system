@@ -1,5 +1,7 @@
 import sys
 import os
+import torch
+torch.backends.mkldnn.enabled = False
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from ultralytics import YOLO
@@ -14,7 +16,7 @@ def box_center(box):
     return ((x1 + x2) // 2, (y1 + y2) // 2)
 
 def detect_vehicles(frame):
-    results = model(frame, conf=0.4, classes=[2, 3, 5, 7])
+    results = model(frame, conf=0.4, classes=[2, 3, 5, 7],imgsz=416)
     accident_detected = False
     vehicle_id = 0
 

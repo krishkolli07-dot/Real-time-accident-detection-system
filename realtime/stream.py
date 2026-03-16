@@ -4,6 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import cv2
 from detector import detect_vehicles
+from backend.database import set_alert
 
 def start_stream():
     cap = cv2.VideoCapture(0)
@@ -20,11 +21,7 @@ def start_stream():
             print("❌ Failed to grab frame")
             break
 
-        # 🔥 FIX: unpack return values
-        results, accident = detect_vehicles(frame)
-
-        for r in results:
-            frame = r.plot()
+        frame, accident = detect_vehicles(frame)
 
         if accident:
             cv2.putText(
